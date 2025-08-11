@@ -253,9 +253,21 @@
 function exportPDF(){
   renderInvoice();
 
-  // Hide delete buttons before export
-  const deleteButtons = document.querySelectorAll('#itemsTable button');
+  const table = document.getElementById('itemsTable');
+  const deleteButtons = table.querySelectorAll('button');
+
+  // Hide delete buttons (optional since hiding column)
   deleteButtons.forEach(btn => btn.style.display = 'none');
+
+  // Hide last column cells (both header and rows)
+  const rows = table.querySelectorAll('tr');
+  rows.forEach(row => {
+    const cells = row.querySelectorAll('th, td');
+    if(cells.length > 0) {
+      const lastCell = cells[cells.length - 1];
+      lastCell.style.display = 'none';
+    }
+  });
 
   const element = document.getElementById('invoice');
   const opt = {
@@ -267,10 +279,20 @@ function exportPDF(){
   };
 
   html2pdf().set(opt).from(element).save().then(() => {
-    // Show delete buttons back after export
+    // Restore delete buttons
     deleteButtons.forEach(btn => btn.style.display = '');
+
+    // Show last column cells again
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('th, td');
+      if(cells.length > 0) {
+        const lastCell = cells[cells.length - 1];
+        lastCell.style.display = '';
+      }
+    });
   });
 }
+
 
 
   // small helper to avoid HTML injection
@@ -285,4 +307,5 @@ function exportPDF(){
     renderInvoice();
   });
 </script>
+
 
