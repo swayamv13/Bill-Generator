@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Invoice / Patient Bill Generator</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
+  <style>
+    body{font-family: 'Times New Roman', Times, serif; background:#f2f4f7; padding:20px;}
+    .app{max-width:800px; margin:auto;}
+    .controls{background:#fff;padding:16px;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.06);margin-bottom:16px}
+    label{display:block;margin-top:8px;font-size:12px;color:#333}
+    input, select{width:100%;padding:8px;margin-top:4px;border:1px solid #ccc;border-radius:4px}
+    button{cursor:pointer;padding:8px 12px;border-radius:4px;border:0}
+    .btn-primary{background:#0b63d6;color:#fff}
+    .invoice{background:#fff;padding:20px;border:1px solid #ccc}
+    .header{grid-template-columns: 1fr 20px; font-family: 'Times New Roman';display: flex; align-items:center;gap:15px;border-bottom:4px solid #cfa93e;padding-bottom:10px;margin-bottom:10px}
+    .header img{height:80px;width:auto}
+    
+    .header-info h1{color:#11114c;margin:0;font-size:25px; font-family: 'Times New Roman', Times, serif;font-weight:bolder;}
+    .header-info p{margin:2px 0;font-size:12px}
+    .header-info span{ color: rgb(250, 147, 2); font-size:19px; font-weight:  bold;border-bottom:2px solid rgb(250, 147, 2);}
+    
+
+    .meta{display:flex;justify-content:space-between;background:#f9f9f9;padding:8px;border:1px solid #ddd;font-size:12px;margin-bottom:8px}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{border:1px solid #ccc;padding:8px;text-align:left}
+    th{background:#f2f2f2}
+    .totals{margin-top:10px;display:flex;justify-content:space-between}
+    .qr-section{display:flex;align-items:center;gap:10px;margin-top:20px;border-top:2px solid #cfa93e;padding-top:10px}
+    .qr-section img{height:180px; width: 140px;}
+    .footer{text-align:right;font-size:12px;margin-top:20px}
+
+    table.items{width:100%;border-collapse:collapse;margin-top:8px}
+    table.items th, table.items td{border:1px solid #666;padding:8px;font-size:13px}
+    table.items th{background:#f3f3f3}
+
+    .totals{display:flex;justify-content:flex-end;margin-top:8px}
+    .totals .inner{width:320px}
+    .totals table{width:100%;border-collapse:collapse}
+    .totals td{padding:6px;border:1px solid #ddd}
+    .right{text-align:right}
+
+    .footer{margin-top:18px;display:flex;justify-content:space-between;align-items:center}
+    .sig{font-size:12px}
+ 
+
+.footer .contribution {
+  font-size: 12px;
+  text-align: center;
+  flex: 1;
+  color: #444;
+  font-style: italic;
+}
+
+
+     @media print {
+  .controls { 
+    display: none; /* Hide the input form at top */
+  }
+  /* Hide only the Action column in the items table */
+  #itemsTable th:last-child,
+  #itemsTable td:last-child {
+    display: none;
+  }
+}
+
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="controls">
+    <label>Patient Name</label>
+    <input id="patientNameInput" type="text" value="">
+    <label>Invoice No.</label>
+    <input id="invoiceNoInput" type="text" value="">
+    <label>Date</label>
+    <input id="dateInput" type="date" value="2025-08-11">
+    <label>Ref by</label>
+    <input id="refby" type="text" value="Dr. ">
+    <label>Age / Gender</label>
+    <input id="ageGenderInput" type="text" value=" ">
+    
+    <h4 style="margin-top:12px">Add Item / Service</h4>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input id="itemName" type="text" placeholder="Service / Medicine" style="flex:2;padding:8px">
+        <input id="itemQty" type="number" placeholder="Qty" value="1" style="width:80px;padding:8px">
+        <input id="itemPrice" type="number" placeholder="Price" value="0" style="width:120px;padding:8px">
+        <button class="btn-primary" onclick="addItem()">Add</button>
+      </div>
+
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="btn-primary" onclick="renderInvoice()">Generate / Update Invoice</button>
+        <button class="btn-muted" onclick="clearForm()">Clear Form</button>
+        <button onclick="exportPDF()" style="background:#00a86b;color:#fff;border:0;padding:8px 12px;border-radius:6px">Export PDF</button>
+        <button onclick="printInvoice()" style="background:#444;color:#fff;padding:8px 12px;border-radius:6px">Print</button>
+      </div>
+  </div>
+    
+
+  <div id="invoice" class="invoice">
+    <div class="header">
+      <img src="img/dr lal.jpg" alt="Logo">
+      <div class="header-info">
+        <h1>R. S. PATHO LAB [DR LAL PATHLAB]</h1>
+        <span> Collection Center</span>
+        <p>LBSM College Road, Harharguttu, Near Shiv Mandir, Jamshedpur</p>
+        <p>Mobile: 8210236683, 9334757725 <br> Email: vishanup007@gmail.com</p>
+      </div>
+      
+    </div>
+
+    <div class="meta">
+      <div>Invoice No: <span id="inv_no">25562</span></div>
+      <div>Invoice Date: <span id="inv_date">2025-08-11</span></div>
+    </div>
+
+    <p><strong>Bill To:</strong> <span id="p_name">Ms. Vandana Dhoot</span></p>
+     <p><strong>Ref by :</strong> <span id="ref_by">Dr. Anup Kumar Vishwakarma</span></p>
+    <p><strong>Age/Sex:</strong> <span id="p_age">54 Years / Female</span></p>
+
+    <table class="items" id="itemsTable">
+        <thead>
+          <tr>
+            <th style="width:50%">Description</th>
+            <th style="width:12%">Rate</th>
+            <th style="width:12%">Qty</th>
+            <th style="width:12%">Amount</th>
+            <th style="width:14%">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- items inserted here -->
+        </tbody>
+      </table>
+
+      <div class="totals">
+        <div class="inner">
+          <table>
+            <tr>
+              <td>Sub Total</td>
+              <td class="right">₹ <span id="subTotal">0.00</span></td>
+            </tr>
+            
+            <tr>
+              <td style="font-weight:700">Grand Total</td>
+              <td class="right" style="font-weight:700">₹ <span id="grandTotal">0.00</span></td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+
+    <div class="qr-section">
+      <img src="img/qr.jpg" alt="QR Code">
+      <div>
+        <p>UPI ID: 9097956657@ybl</p>
+        <p>Pay via PhonePe / GPay / Paytm</p>
+      </div>
+    </div>
+<div class="footer">
+        <div class="muted">Thank you for your visit. Get well soon!</div>
+          <div class="contribution">✨ Created by <strong>Swayamv</strong> ✨</div>
+        <div class="sig">Authorised Signatory<br><br>__________________</div>
+      </div>
+   
+  </div>
+</div>
+
+<script>
+  // In-memory items list
+  let items = [
+    // sample items copied from the PDF feel
+ 
+    
+  ];
+
+  // Initialize date input to today if not set
+  const dateInput = document.getElementById('dateInput');
+  if(!dateInput.value) dateInput.value = new Date().toISOString().slice(0,10);
+
+  function formatMoney(v){
+    return Number(v).toFixed(2);
+  }
+
+  function renderItems(){
+    const tbody = document.querySelector('#itemsTable tbody');
+    tbody.innerHTML = '';
+    items.forEach((it, idx) =>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="text-align:left">${escapeHtml(it.desc)}</td>
+        <td class="right">${formatMoney(it.rate)}</td>
+        <td class="right">${it.qty}</td>
+        <td class="right">${formatMoney(it.rate * it.qty)}</td>
+        <td class="right"><button onclick="removeItem(${idx})" style="background:#ff6b6b;color:#fff;padding:6px;border-radius:6px;border:0">Delete</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+    calculateTotals();
+  }
+
+  function addItem(){
+    const name = document.getElementById('itemName').value.trim();
+    const qty = Number(document.getElementById('itemQty').value) || 1;
+    const price = Number(document.getElementById('itemPrice').value) || 0;
+    if(!name){ alert('Enter item/service name'); return; }
+    items.push({desc:name, rate:price, qty:qty});
+    document.getElementById('itemName').value='';
+    document.getElementById('itemQty').value=1;
+    document.getElementById('itemPrice').value=0;
+    renderItems();
+  }
+
+  function removeItem(i){ items.splice(i,1); renderItems(); }
+
+  function calculateTotals(){
+    let sub = items.reduce((s,it)=> s + (it.rate * it.qty), 0);
+    // Example tax split: CGST 2.5 + SGST 2.5 => 5% total
+  
+    let grand = sub ;
+    document.getElementById('subTotal').innerText = formatMoney(sub);
+    document.getElementById('grandTotal').innerText = formatMoney(grand);
+  }
+
+  function renderInvoice(){
+    // fill header details
+    document.getElementById('p_name').innerText = document.getElementById('patientNameInput').value || '---';
+    document.getElementById('inv_no').innerText = document.getElementById('invoiceNoInput').value || '---';
+    document.getElementById('p_age').innerText = document.getElementById('ageGenderInput').value || '---';
+    document.getElementById('inv_date').innerText = document.getElementById('dateInput').value || new Date().toISOString().slice(0,10);
+    document.getElementById('ref_by').innerText = document.getElementById('refby').value || '---';
+
+    renderItems();
+  }
+
+  function clearForm(){
+    document.getElementById('patientNameInput').value='';
+    document.getElementById('invoiceNoInput').value='';
+    document.getElementById('ageGenderInput').value='';
+    document.getElementById('itemName').value='';
+    document.getElementById('itemQty').value=1;
+    document.getElementById('itemPrice').value=0;
+    items = [];
+    renderInvoice();
+  }
+
+  function printInvoice(){
+    renderInvoice();
+    window.print();
+  }
+
+  function exportPDF(){
+    renderInvoice();
+    const element = document.getElementById('invoice');
+    const opt = {
+      margin:       10,
+      filename:     (document.getElementById('invoiceNoInput').value || 'invoice') + '.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2 },
+      jsPDF:        { unit: 'pt', format: 'a4', orientation: 'portrait' }
+    };
+    // html2pdf currently returns a promise
+    html2pdf().set(opt).from(element).save();
+  }
+
+  // small helper to avoid HTML injection
+  function escapeHtml(text){
+    return text.replace(/[&<>\"']/g, function (c) {
+      return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":"&#39;"}[c];
+    });
+  }
+
+  // Init on load
+  window.addEventListener('load', ()=>{
+    renderInvoice();
+  });
+</script>
