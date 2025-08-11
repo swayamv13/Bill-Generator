@@ -250,19 +250,28 @@
     window.print();
   }
 
-  function exportPDF(){
-    renderInvoice();
-    const element = document.getElementById('invoice');
-    const opt = {
-      margin:       10,
-      filename:     (document.getElementById('invoiceNoInput').value || 'invoice') + '.pdf',
-      image:        { type: 'jpeg', quality: 0.98 },
-      html2canvas:  { scale: 2 },
-      jsPDF:        { unit: 'pt', format: 'a4', orientation: 'portrait' }
-    };
-    // html2pdf currently returns a promise
-    html2pdf().set(opt).from(element).save();
-  }
+function exportPDF(){
+  renderInvoice();
+
+  // Hide delete buttons before export
+  const deleteButtons = document.querySelectorAll('#itemsTable button');
+  deleteButtons.forEach(btn => btn.style.display = 'none');
+
+  const element = document.getElementById('invoice');
+  const opt = {
+    margin:       10,
+    filename:     (document.getElementById('invoiceNoInput').value || 'invoice') + '.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2 },
+    jsPDF:        { unit: 'pt', format: 'a4', orientation: 'portrait' }
+  };
+
+  html2pdf().set(opt).from(element).save().then(() => {
+    // Show delete buttons back after export
+    deleteButtons.forEach(btn => btn.style.display = '');
+  });
+}
+
 
   // small helper to avoid HTML injection
   function escapeHtml(text){
@@ -276,3 +285,4 @@
     renderInvoice();
   });
 </script>
+
