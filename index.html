@@ -862,23 +862,45 @@
       renderInvoice();
       commitInvoiceNumber();
       const element = document.getElementById('invoice');
+
+      // Config for PDF
       const opt = {
-        margin: 10,
+        margin: 0, // No margin here, relying on CSS padding
         filename: `Invoice-${document.getElementById('invoiceNoInput').value}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true },
+        // FIX: windowWidth forces html2canvas to render as if on desktop
+        html2canvas: { scale: 2, useCORS: true, windowWidth: 1200, scrollY: 0 },
         jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
       };
+
+      // Pre-export cleanup
       const noPrintEls = element.querySelectorAll('.no-print');
       noPrintEls.forEach(el => el.style.display = 'none');
+
+      // Store original styles
       const originalShadow = element.style.boxShadow;
       const originalTransform = element.style.transform;
+      const originalMinHeight = element.style.minHeight;
+      const originalMargin = element.style.margin;
+
+      // Apply PDF-specific styles (Reset zoom, flattening)
       element.style.boxShadow = 'none';
       element.style.transform = 'none';
+      element.style.margin = '0 auto';
+      // We temporarily remove min-height to ensure footer isn't pushed to a separate non-captured page
+      // IF user wants sticky bottom in PDF, we keep it. 
+      // But often html2canvas is safer with auto flow. 
+      // Let's TRY keeping it (A4 height) but ensure windowWidth captures it.
+
+      // Force a redraw needed? Sometimes.
+
       html2pdf().set(opt).from(element).save().then(() => {
+        // Restore styles
         noPrintEls.forEach(el => el.style.display = '');
         element.style.boxShadow = originalShadow;
         element.style.transform = originalTransform;
+        element.style.minHeight = originalMinHeight;
+        element.style.margin = originalMargin;
       });
     }
 
