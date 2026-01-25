@@ -602,7 +602,7 @@
         <div class="header">
           <img src="img/dr lal.jpg" alt="Logo">
           <div class="header-info">
-            <h1>R. S. PATHO LAB [DR LAL PATHLAB]</h1>
+            <h1>R. S. PATHO LAB</h1>
             <span>Collection Center</span>
             <p>LBSM College Road, Harharguttu, Near Shiv Mandir, Jamshedpur</p>
             <p><strong>Mobile:</strong> 8210236683, 9334757725 &nbsp;|&nbsp; <strong>Email:</strong>
@@ -881,18 +881,15 @@
       const originalShadow = element.style.boxShadow;
       const originalTransform = element.style.transform;
       const originalMinHeight = element.style.minHeight;
+      const originalHeight = element.style.height; // Store original height
       const originalMargin = element.style.margin;
 
       // Apply PDF-specific styles (Reset zoom, flattening)
       element.style.boxShadow = 'none';
       element.style.transform = 'none';
       element.style.margin = '0 auto';
-      // We temporarily remove min-height to ensure footer isn't pushed to a separate non-captured page
-      // IF user wants sticky bottom in PDF, we keep it. 
-      // But often html2canvas is safer with auto flow. 
-      // Let's TRY keeping it (A4 height) but ensure windowWidth captures it.
-
-      // Force a redraw needed? Sometimes.
+      element.style.minHeight = 'auto'; // FIX: Force Compact Height
+      element.style.height = 'auto'; // Ensure height is auto for content fitting
 
       html2pdf().set(opt).from(element).save().then(() => {
         // Restore styles
@@ -900,6 +897,7 @@
         element.style.boxShadow = originalShadow;
         element.style.transform = originalTransform;
         element.style.minHeight = originalMinHeight;
+        element.style.height = originalHeight; // Restore original height
         element.style.margin = originalMargin;
       });
     }
