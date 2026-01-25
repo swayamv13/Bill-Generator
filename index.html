@@ -865,11 +865,11 @@
 
       // Config for PDF
       const opt = {
-        margin: 0, // No margin here, relying on CSS padding
+        margin: 0,
         filename: `Invoice-${document.getElementById('invoiceNoInput').value}.pdf`,
         image: { type: 'jpeg', quality: 0.98 },
-        // FIX: windowWidth forces html2canvas to render as if on desktop
-        html2canvas: { scale: 2, useCORS: true, windowWidth: 1200, scrollY: 0 },
+        // FIX: Force desktop width AND sufficient height to capture full A4 on mobile
+        html2canvas: { scale: 2, useCORS: true, windowWidth: 1200, windowHeight: 1600, scrollY: 0 },
         jsPDF: { unit: 'pt', format: 'a4', orientation: 'portrait' }
       };
 
@@ -888,8 +888,9 @@
       element.style.boxShadow = 'none';
       element.style.transform = 'none';
       element.style.margin = '0 auto';
-      element.style.minHeight = 'auto'; // FIX: Force Compact Height
-      element.style.height = 'auto'; // Ensure height is auto for content fitting
+      // FORCE A4 Height so footer sits at bottom with space in middle
+      element.style.minHeight = '1123px';
+      element.style.height = '1123px'; // Rigid height logic
 
       html2pdf().set(opt).from(element).save().then(() => {
         // Restore styles
@@ -897,7 +898,7 @@
         element.style.boxShadow = originalShadow;
         element.style.transform = originalTransform;
         element.style.minHeight = originalMinHeight;
-        element.style.height = originalHeight; // Restore original height
+        element.style.height = 'auto'; // Reset height
         element.style.margin = originalMargin;
       });
     }
