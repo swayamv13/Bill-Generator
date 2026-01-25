@@ -64,7 +64,6 @@
       box-shadow: var(--shadow);
       position: relative;
       z-index: 10;
-      /* Ensure dropdowns float above */
     }
 
     .section-title {
@@ -80,7 +79,6 @@
     .form-group {
       margin-bottom: 16px;
       position: relative;
-      /* For dropdown positioning */
     }
 
     .form-row {
@@ -102,7 +100,6 @@
       width: 100%;
       padding: 12px;
       font-size: 1rem;
-      /* 16px prevents zoom on iOS */
       border: 1px solid var(--border);
       border-radius: 8px;
       background: #f9fafb;
@@ -116,7 +113,7 @@
       background: #fff;
     }
 
-    /* Custom Autocomplete Dropdown */
+    /* Custom Autocomplete */
     .suggestions-list {
       position: absolute;
       top: 100%;
@@ -131,7 +128,6 @@
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
       z-index: 50;
       display: none;
-      /* Hidden by default */
     }
 
     .suggestions-list.active {
@@ -179,7 +175,6 @@
       transition: all 0.2s;
       width: 100%;
       height: 48px;
-      /* Touch target */
       gap: 8px;
     }
 
@@ -245,21 +240,18 @@
       border: 1px solid var(--border);
       margin-bottom: 20px;
       position: relative;
-      /* Context */
     }
 
-    /* Invoice Preview - Scaled wrapper for mobile */
+    /* Invoice Preview */
     .invoice-preview-wrapper {
       width: 100%;
       background: #525659;
       padding: 20px;
       border-radius: var(--radius);
-      /* Centering content */
       display: flex;
       flex-direction: column;
       align-items: center;
       overflow: hidden;
-      /* Hide scrollbars, we will scale instead */
       min-height: 200px;
     }
 
@@ -276,20 +268,25 @@
 
     /* 
        ACTUAL INVOICE STYLES 
-       Fixed width and layout for print consistency.
     */
     .invoice {
       background: #fff;
-      padding: 30px 40px;
+      padding: 40px;
       width: 800px;
-      /* No min-height fixed here, let content dictate or JS handle it */
-      min-height: 1000px;
+      /* A4 Height Fix */
+      min-height: 1100px;
+      display: flex;
+      flex-direction: column;
       box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
       font-family: 'Times New Roman', Times, serif;
       color: #000;
       box-sizing: border-box;
-      /* Vital for scaling */
       transform-origin: top center;
+    }
+
+    /* This pushes the footer to the bottom */
+    .invoice-bottom {
+      margin-top: auto;
     }
 
     .header {
@@ -368,7 +365,6 @@
       display: inline-block;
     }
 
-    /* Invoice Tables */
     table.items {
       width: 100%;
       border-collapse: collapse;
@@ -390,7 +386,6 @@
       color: #000;
     }
 
-    /* Column Widths & Alignment */
     .col-desc {
       text-align: left;
     }
@@ -427,7 +422,6 @@
       text-align: center;
     }
 
-    /* Totals */
     .totals-section {
       display: flex;
       justify-content: flex-end;
@@ -449,7 +443,6 @@
       background: #f9f9f9;
     }
 
-    /* Footer & QR */
     .qr-section {
       display: flex;
       align-items: center;
@@ -479,7 +472,6 @@
       font-size: 12px;
     }
 
-    /* Print Specifics */
     @media print {
       body {
         background: white;
@@ -499,23 +491,19 @@
         display: none;
       }
 
-      /* Hide UI */
-
-      /* Show Invoice ONLY */
       .invoice {
-        display: block !important;
+        display: flex !important;
         position: absolute;
         top: 0;
         left: 0;
         width: 100%;
         margin: 0;
         padding: 40px;
-        /* Standard print padding */
         border: none;
         box-shadow: none;
         transform: none !important;
-        /* Disable zoom for print */
-        height: auto !important;
+        min-height: 100vh;
+        /* Ensure full page height for print */
       }
 
       .no-print {
@@ -534,11 +522,9 @@
 
   <div class="app-container">
 
-    <!-- Left Side: Controls -->
     <div class="controls">
       <div class="section-title">
         <span style="font-size:24px">📝</span> Bill Details
-        <!-- Auto Invoice Toggle -->
         <div style="margin-left:auto; font-size:12px; font-weight:normal; display:flex; gap:8px; align-items:center">
           <span id="invoiceModeLabel">Auto No. ON</span>
           <button onclick="resetInvoiceCount()"
@@ -584,11 +570,7 @@
         <div class="form-group">
           <label>Service / Test Name</label>
           <input id="itemName" type="text" placeholder="Type to search test..." autocomplete="off">
-
-          <!-- CUSTOM DROPDOWN LIST -->
-          <div id="suggestionsList" class="suggestions-list">
-            <!-- Populated by JS -->
-          </div>
+          <div id="suggestionsList" class="suggestions-list"></div>
         </div>
         <div class="form-row">
           <div>
@@ -611,14 +593,12 @@
       </div>
     </div>
 
-    <!-- Right Side: Invoice Preview -->
     <div class="invoice-preview-wrapper" id="previewWrapper">
       <div class="zoom-controls">
         <span>Preview Mode (Auto-Fit)</span>
       </div>
       <div id="invoice" class="invoice">
 
-        <!-- Invoice Header -->
         <div class="header">
           <img src="img/dr lal.jpg" alt="Logo">
           <div class="header-info">
@@ -630,20 +610,17 @@
           </div>
         </div>
 
-        <!-- Meta Info -->
         <div class="meta-grid">
           <div>Invoice No: <span id="inv_no">---</span></div>
           <div>Date: <span id="inv_date">---</span></div>
         </div>
 
-        <!-- Patient Info -->
         <div class="patient-details">
           <p><strong>Bill To:</strong> <span id="p_name">---</span></p>
           <p><strong>Ref By:</strong> <span id="ref_by">---</span></p>
           <p><strong>Age/Sex:</strong> <span id="p_age">---</span></p>
         </div>
 
-        <!-- Items Table -->
         <table class="items" id="itemsTable">
           <thead>
             <tr>
@@ -654,53 +631,51 @@
               <th class="col-act no-print">Action</th>
             </tr>
           </thead>
-          <tbody>
-            <!-- Dynamic Items -->
-          </tbody>
+          <tbody></tbody>
         </table>
 
-        <!-- Totals -->
-        <div class="totals-section">
-          <table class="totals-table">
-            <tr>
-              <td>Sub Total</td>
-              <td class="right">₹ <span id="subTotal">0.00</span></td>
-            </tr>
-            <tr>
-              <td style="font-weight:bold; font-size:16px;">Grand Total</td>
-              <td class="right" style="font-weight:bold; font-size:16px;">₹ <span id="grandTotal">0.00</span></td>
-            </tr>
-          </table>
-        </div>
-
-        <!-- Bottom Section -->
-        <div class="qr-section">
-          <img src="img/qr.jpg" alt="QR Code">
-          <div class="qr-text">
-            <p>UPI ID: 9097956657@ybl</p>
-            <p>Preferred: PhonePe / GPay / Paytm</p>
-            <p style="font-weight:normal; font-size:11px; color:#555; margin-top:5px">Scan to pay directly</p>
+        <!-- WRAPPER FOR BOTTOM SECTION TO PUSH IT DOWN -->
+        <div class="invoice-bottom">
+          <div class="totals-section">
+            <table class="totals-table">
+              <tr>
+                <td>Sub Total</td>
+                <td class="right">₹ <span id="subTotal">0.00</span></td>
+              </tr>
+              <tr>
+                <td style="font-weight:bold; font-size:16px;">Grand Total</td>
+                <td class="right" style="font-weight:bold; font-size:16px;">₹ <span id="grandTotal">0.00</span></td>
+              </tr>
+            </table>
           </div>
-        </div>
 
-        <div class="inv-footer">
-          <div class="inv-footer-content"
-            style="display:flex; justify-content:space-between; align-items:flex-end; width:100%">
-            <div style="font-style:italic; color:#555;">Thank you for your visit. Get well soon!</div>
-            <div style="text-align:center">
-              Authorised Signatory<br><br>
-              _______________________
+          <div class="qr-section">
+            <img src="img/qr.jpg" alt="QR Code">
+            <div class="qr-text">
+              <p>UPI ID: 9097956657@ybl</p>
+              <p>Preferred: PhonePe / GPay / Paytm</p>
+              <p style="font-weight:normal; font-size:11px; color:#555; margin-top:5px">Scan to pay directly</p>
             </div>
           </div>
-        </div>
-        <div style="text-align:center; font-size:10px; color:#ccc; margin-top:10px;">✨ Created by Swayamv ✨</div>
+
+          <div class="inv-footer">
+            <div class="inv-footer-content"
+              style="display:flex; justify-content:space-between; align-items:flex-end; width:100%">
+              <div style="font-style:italic; color:#555;">Thank you for your visit. Get well soon!</div>
+              <div style="text-align:center">
+                Authorised Signatory<br><br>
+                _______________________
+              </div>
+            </div>
+          </div>
+          <div style="text-align:center; font-size:10px; color:#ccc; margin-top:10px;">✨ Created by Swayamv ✨</div>
+        </div> <!-- End invoice-bottom -->
 
       </div>
     </div>
   </div>
 
   <script>
-    // --- DATABASE ---
     const labTests = [
       { name: "CBC (Complete Blood Count)", price: 350 },
       { name: "Blood Sugar (Fasting)", price: 100 },
@@ -724,26 +699,15 @@
       { name: "Uric Acid", price: 200 }
     ];
 
-    // --- STATE ---
     let items = [];
 
-    // --- INITIALIZATION ---
     window.addEventListener('load', () => {
-      // 1. Set Date
       const dateInput = document.getElementById('dateInput');
       if (!dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
-
-      // 2. Invoice ID
       initInvoiceNumber();
-
-      // 3. Initial Render
       renderInvoice();
-
-      // 4. Handle Zoom Logic
       handleResize();
       window.addEventListener('resize', handleResize);
-
-      // 5. Global Click for closing dropdown
       document.addEventListener('click', (e) => {
         const wrapper = document.querySelector('.form-group');
         if (!wrapper.contains(e.target)) {
@@ -752,7 +716,6 @@
       });
     });
 
-    // --- AUTOCOMPLETE LOGIC ---
     const nameInput = document.getElementById('itemName');
     const suggestionsList = document.getElementById('suggestionsList');
 
@@ -764,10 +727,7 @@
         suggestionsList.classList.remove('active');
         return;
       }
-
-      // Filter
       const matches = labTests.filter(t => t.name.toLowerCase().includes(val));
-
       if (matches.length > 0) {
         matches.forEach(test => {
           const div = document.createElement('div');
@@ -788,35 +748,18 @@
       suggestionsList.classList.remove('active');
     }
 
-
-    // --- ZOOM / SCALE LOGIC ---
     function handleResize() {
       const wrapper = document.getElementById('previewWrapper');
       const invoice = document.getElementById('invoice');
       const INVOICE_WIDTH = 800;
-      const PADDING = 40; // wrapper padding
-
-      // Calculate available width
+      const PADDING = 40;
       const availableWidth = wrapper.clientWidth - PADDING;
-
-      // Calculate Scale
       let scale = availableWidth / INVOICE_WIDTH;
-      if (scale > 1) scale = 1; // max scale 1
-
-      // Apply Scale
+      if (scale > 1) scale = 1;
       invoice.style.transform = `scale(${scale})`;
-
-      // Adjust height of container because Scale doesn't affect flow
-      // scaledHeight = originalHeight * scale
-      // We assume min-height 1000px for calculation, or formatted height
-      const currentHeight = invoice.scrollHeight; // use scrollHeight to get full size
-      // wrapper.style.height = (currentHeight * scale) + 50 + 'px'; 
-      // Actually applying margin-bottom is safer
+      const currentHeight = invoice.scrollHeight;
       invoice.style.marginBottom = `-${currentHeight * (1 - scale)}px`;
     }
-
-
-    // --- INVOICE LOGIC ---
 
     function initInvoiceNumber() {
       let lastNo = localStorage.getItem('lastInvoiceNo');
@@ -842,37 +785,24 @@
       const nameInput = document.getElementById('itemName');
       const priceInput = document.getElementById('itemPrice');
       const qtyInput = document.getElementById('itemQty');
-
       const name = nameInput.value.trim();
       const price = parseFloat(priceInput.value) || 0;
       const qty = parseFloat(qtyInput.value) || 1;
-
-      if (!name) {
-        alert('Please select or enter a service name.');
-        return;
-      }
-
+      if (!name) { alert('Please select or enter a service name.'); return; }
       items.push({ desc: name, rate: price, qty: qty });
-      nameInput.value = '';
-      priceInput.value = '';
-      qtyInput.value = 1;
-      nameInput.focus();
-      renderItems();
-      renderInvoice();
+      nameInput.value = ''; priceInput.value = ''; qtyInput.value = 1; nameInput.focus();
+      renderItems(); renderInvoice();
     }
 
     function removeItem(index) {
       if (confirm('Remove this item?')) {
-        items.splice(index, 1);
-        renderItems();
-        renderInvoice();
+        items.splice(index, 1); renderItems(); renderInvoice();
       }
     }
 
     function renderItems() {
       const tbody = document.querySelector('#itemsTable tbody');
       tbody.innerHTML = '';
-
       items.forEach((item, index) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -887,7 +817,7 @@
         tbody.appendChild(tr);
       });
       calculateTotals();
-      // After render, update size for zoom
+      // Re-calculate margins after render
       setTimeout(handleResize, 100);
     }
 
@@ -904,8 +834,7 @@
       document.getElementById('p_age').innerText = getText('ageGenderInput');
       document.getElementById('inv_date').innerText = getText('dateInput');
       document.getElementById('ref_by').innerText = getText('refby');
-
-      renderItems(); // This triggers resize
+      renderItems();
     }
 
     function clearForm() {
@@ -913,7 +842,6 @@
         const current = parseInt(document.getElementById('invoiceNoInput').value);
         localStorage.setItem('lastInvoiceNo', current);
         document.getElementById('invoiceNoInput').value = current + 1;
-
         document.getElementById('patientNameInput').value = '';
         document.getElementById('ageGenderInput').value = '';
         document.getElementById('itemName').value = '';
@@ -945,15 +873,12 @@
       noPrintEls.forEach(el => el.style.display = 'none');
       const originalShadow = element.style.boxShadow;
       const originalTransform = element.style.transform;
-
-      // Reset Zoom for PDF Generation
       element.style.boxShadow = 'none';
       element.style.transform = 'none';
-
       html2pdf().set(opt).from(element).save().then(() => {
         noPrintEls.forEach(el => el.style.display = '');
         element.style.boxShadow = originalShadow;
-        element.style.transform = originalTransform; // Restore zoom
+        element.style.transform = originalTransform;
       });
     }
 
