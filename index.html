@@ -361,7 +361,8 @@
     }
 
     .patient-details strong {
-      min-width: 80px;
+      /* min-width: 80px; removed to reduce gap */
+      margin-right: 4px;
       display: inline-block;
     }
 
@@ -532,9 +533,15 @@
         </div>
       </div>
 
-      <div class="form-group">
-        <label>Patient Name</label>
-        <input id="patientNameInput" type="text" placeholder="Enter patient name">
+      <div class="form-row">
+        <div>
+          <label>Patient Name</label>
+          <input id="patientNameInput" type="text" placeholder="Enter patient name">
+        </div>
+        <div>
+          <label>Mobile No</label>
+          <input id="patientMobileInput" type="tel" placeholder="10-digit number">
+        </div>
       </div>
 
       <div class="form-row">
@@ -550,9 +557,19 @@
       </div>
 
       <div class="form-row">
-        <div>
-          <label>Age / Gender</label>
-          <input id="ageGenderInput" type="text" placeholder="e.g. 54 Y / F">
+        <div style="display:flex; gap:10px;">
+          <div style="flex:1">
+            <label>Age</label>
+            <input id="patientAgeInput" type="number" placeholder="Yrs">
+          </div>
+          <div style="flex:1">
+            <label>Gender</label>
+            <select id="patientGenderInput">
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
         </div>
         <div>
           <label>Ref. By</label>
@@ -582,7 +599,10 @@
             <input id="itemQty" type="number" value="1">
           </div>
         </div>
-        <button class="btn btn-primary" style="margin-top:12px" onclick="addItem()">Add to Bill</button>
+        <div style="display:flex; gap:10px; margin-top:12px;">
+          <button class="btn btn-primary" style="flex:1;" onclick="addItem()">Add to Bill</button>
+          <button class="btn btn-secondary" style="flex:1;" onclick="saveCustomTest()">💾 Save New Test</button>
+        </div>
       </div>
 
       <div class="action-bar">
@@ -590,6 +610,36 @@
         <button class="btn btn-secondary" onclick="clearForm()">✕ Clear All</button>
         <button class="btn btn-dark full-width" onclick="exportPDF()">⬇ Download PDF</button>
         <button class="btn btn-secondary full-width" onclick="printInvoice()">🖨 Print Bill</button>
+        <button class="btn btn-secondary full-width" style="background:#6366f1; color:white; border:none;"
+          onclick="openHistory()">📜 View Order History</button>
+      </div>
+    </div>
+
+    <!-- History Modal -->
+    <div id="historyModal"
+      style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); z-index:100; align-items:center; justify-content:center;">
+      <div
+        style="background:white; padding:24px; border-radius:12px; width:90%; max-width:800px; max-height:80vh; display:flex; flex-direction:column; overflow:hidden;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h2 style="margin:0; font-size:20px;">Bill History</h2>
+          <button onclick="closeHistory()"
+            style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>
+        </div>
+        <div style="overflow-y:auto; flex:1;">
+          <table style="width:100%; border-collapse:collapse; font-size:14px;">
+            <thead>
+              <tr style="background:#f3f4f6; text-align:left;">
+                <th style="padding:10px; border-bottom:1px solid #ddd;">Inv #</th>
+                <th style="padding:10px; border-bottom:1px solid #ddd;">Date</th>
+                <th style="padding:10px; border-bottom:1px solid #ddd;">Patient</th>
+                <th style="padding:10px; border-bottom:1px solid #ddd;">Total</th>
+                <th style="padding:10px; border-bottom:1px solid #ddd;">Status</th>
+                <th style="padding:10px; border-bottom:1px solid #ddd;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="historyTableBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
@@ -616,9 +666,20 @@
         </div>
 
         <div class="patient-details">
-          <p><strong>Bill To:</strong> <span id="p_name">---</span></p>
-          <p><strong>Ref By:</strong> <span id="ref_by">---</span></p>
-          <p><strong>Age/Sex:</strong> <span id="p_age">---</span></p>
+          <table style="width:100%; border-collapse:collapse; border:none;">
+            <tr>
+              <td style="border:none; padding:2px;"><strong>Bill To:</strong> <span id="p_name">---</span></td>
+              <td style="border:none; padding:2px; text-align:right;"><strong>Mobile:</strong> <span
+                  id="p_mobile">---</span></td>
+            </tr>
+            <tr>
+              <td style="border:none; padding:2px;"><strong>Age:</strong> <span id="p_age">---</span> &nbsp;&nbsp;
+                <strong>Sex:</strong> <span id="p_sex">---</span>
+              </td>
+              <td style="border:none; padding:2px; text-align:right;"><strong>Ref By:</strong> <span
+                  id="ref_by">---</span></td>
+            </tr>
+          </table>
         </div>
 
         <table class="items" id="itemsTable">
@@ -676,7 +737,128 @@
   </div>
 
   <script>
-    const labTests = [
+    // --- History Functions ---
+    function openHistory() {
+      const modal = document.getElementById('historyModal');
+      modal.style.display = 'flex';
+      renderHistoryTable();
+    }
+
+    function closeHistory() {
+      document.getElementById('historyModal').style.display = 'none';
+    }
+
+    function saveBillToHistory() {
+      const invoiceNo = document.getElementById('invoiceNoInput').value;
+      const date = document.getElementById('dateInput').value;
+      const patientName = document.getElementById('patientNameInput').value || 'Unknown';
+      const mobile = document.getElementById('patientMobileInput').value || '';
+      const age = document.getElementById('patientAgeInput').value || '';
+      const sex = document.getElementById('patientGenderInput').value || '';
+      const refBy = document.getElementById('refby').value || '';
+      const total = items.reduce((acc, item) => acc + (item.rate * item.qty), 0);
+
+      if (items.length === 0) return;
+
+      const billData = {
+        id: invoiceNo,
+        date: date,
+        patientName: patientName,
+        mobile: mobile,
+        age: age,
+        sex: sex,
+        refBy: refBy,
+        totalAmout: total,
+        status: 'Paid',
+        items: [...items]
+      };
+
+      let history = JSON.parse(localStorage.getItem('billHistory') || '[]');
+
+      const existingIndex = history.findIndex(b => b.id === invoiceNo);
+      if (existingIndex >= 0) {
+        billData.status = history[existingIndex].status;
+        history[existingIndex] = billData;
+      } else {
+        history.push(billData);
+      }
+
+      localStorage.setItem('billHistory', JSON.stringify(history));
+    }
+
+    function renderHistoryTable() {
+      const tbody = document.getElementById('historyTableBody');
+      const history = JSON.parse(localStorage.getItem('billHistory') || '[]').reverse();
+      tbody.innerHTML = '';
+
+      if (history.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">No history found.</td></tr>';
+        return;
+      }
+
+      history.forEach(bill => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+                <td style="padding:10px; border-bottom:1px solid #eee;">${bill.id}</td>
+                <td style="padding:10px; border-bottom:1px solid #eee;">${bill.date}</td>
+                <td style="padding:10px; border-bottom:1px solid #eee;">${bill.patientName}</td>
+                <td style="padding:10px; border-bottom:1px solid #eee;">₹${bill.totalAmout || 0}</td>
+                <td style="padding:10px; border-bottom:1px solid #eee;">
+                    <span style="border-radius:4px; padding:2px 6px; font-size:12px; 
+                        background:${bill.status === 'Paid' ? '#dcfce7' : '#fee2e2'}; 
+                        color:${bill.status === 'Paid' ? '#166534' : '#991b1b'}">
+                        ${bill.status}
+                    </span>
+                </td>
+                <td style="padding:10px; border-bottom:1px solid #eee;">
+                    <button style="cursor:pointer; font-size:16px; margin-right:6px; border:none; background:none;" title="View Report" onclick="loadBill('${bill.id}')">👁️</button>
+                    <button style="cursor:pointer; font-size:12px; margin-right:4px;" onclick="toggleBillStatus('${bill.id}')">Toggle Status</button>
+                    <button style="cursor:pointer; color:red; font-size:12px;" onclick="deleteBill('${bill.id}')">Delete</button>
+                </td>
+            `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function loadBill(id) {
+      const history = JSON.parse(localStorage.getItem('billHistory') || '[]');
+      const bill = history.find(b => b.id === id);
+      if (!bill) return;
+
+      if (!confirm('Load this bill? Current unsaved changes will be lost.')) return;
+
+      document.getElementById('invoiceNoInput').value = bill.id;
+      document.getElementById('dateInput').value = bill.date || new Date().toISOString().slice(0, 10);
+      document.getElementById('patientNameInput').value = bill.patientName || '';
+      document.getElementById('patientMobileInput').value = bill.mobile || '';
+      document.getElementById('patientAgeInput').value = bill.age || '';
+      document.getElementById('patientGenderInput').value = bill.sex || 'Male';
+      document.getElementById('refby').value = bill.refBy || 'Dr. '; // Fallback or current default? Better use saved.
+
+      items = bill.items || [];
+      renderInvoice();
+      closeHistory();
+    }
+
+    function toggleBillStatus(id) {
+      let history = JSON.parse(localStorage.getItem('billHistory') || '[]');
+      const bill = history.find(b => b.id === id);
+      if (bill) {
+        bill.status = bill.status === 'Paid' ? 'Balance' : 'Paid';
+        localStorage.setItem('billHistory', JSON.stringify(history));
+        renderHistoryTable();
+      }
+    }
+
+    function deleteBill(id) {
+      if (!confirm('Delete this bill from history?')) return;
+      let history = JSON.parse(localStorage.getItem('billHistory') || '[]');
+      history = history.filter(b => b.id !== id);
+      localStorage.setItem('billHistory', JSON.stringify(history));
+      renderHistoryTable();
+    }
+
+    const defaultTests = [
       { name: "CBC (Complete Blood Count)", price: 350 },
       { name: "Blood Sugar (Fasting)", price: 100 },
       { name: "Blood Sugar (PP)", price: 100 },
@@ -699,11 +881,13 @@
       { name: "Uric Acid", price: 200 }
     ];
 
+    let labTests = [...defaultTests];
     let items = [];
 
     window.addEventListener('load', () => {
       const dateInput = document.getElementById('dateInput');
       if (!dateInput.value) dateInput.value = new Date().toISOString().slice(0, 10);
+      loadCustomTests();
       initInvoiceNumber();
       renderInvoice();
       handleResize();
@@ -715,6 +899,59 @@
         }
       });
     });
+
+    function loadCustomTests() {
+      const stored = localStorage.getItem('customTests');
+      if (stored) {
+        try {
+          const custom = JSON.parse(stored);
+          if (Array.isArray(custom)) {
+            // merge preventing duplicates if needed, or just push
+            // For simplicity, we just append them. 
+            // Better to check if they already exist to avoid double listing if user resets defaults.
+            custom.forEach(c => {
+              if (!labTests.some(t => t.name === c.name)) {
+                labTests.push(c);
+              }
+            });
+          }
+        } catch (e) {
+          console.error("Failed to load custom tests", e);
+        }
+      }
+    }
+
+    function saveCustomTest() {
+      const name = document.getElementById('itemName').value.trim();
+      const price = parseFloat(document.getElementById('itemPrice').value) || 0;
+
+      if (!name) {
+        alert("Please enter a test name.");
+        return;
+      }
+
+      // Check if already exists
+      const exists = labTests.some(t => t.name.toLowerCase() === name.toLowerCase());
+      if (exists) {
+        alert("This test already exists in the list!");
+        return;
+      }
+
+      const newTest = { name, price };
+      labTests.push(newTest);
+
+      // Save to localStorage (only custom ones)
+      let currentCustom = [];
+      const stored = localStorage.getItem('customTests');
+      if (stored) {
+        try { currentCustom = JSON.parse(stored); } catch (e) { }
+      }
+      currentCustom.push(newTest);
+      localStorage.setItem('customTests', JSON.stringify(currentCustom));
+
+      alert(`Saved "${name}" @ ₹${price} to list!`);
+      document.getElementById('suggestionsList').classList.remove('active'); // Hide potential suggestion box
+    }
 
     const nameInput = document.getElementById('itemName');
     const suggestionsList = document.getElementById('suggestionsList');
@@ -830,8 +1067,15 @@
     function renderInvoice() {
       const getText = (id) => document.getElementById(id).value || '---';
       document.getElementById('p_name').innerText = getText('patientNameInput');
+      document.getElementById('p_mobile').innerText = getText('patientMobileInput');
       document.getElementById('inv_no').innerText = getText('invoiceNoInput');
-      document.getElementById('p_age').innerText = getText('ageGenderInput');
+
+      const age = document.getElementById('patientAgeInput').value;
+      const sex = document.getElementById('patientGenderInput').value;
+
+      document.getElementById('p_age').innerText = age ? age + ' Yrs' : '---';
+      document.getElementById('p_sex').innerText = sex || '---';
+
       document.getElementById('inv_date').innerText = getText('dateInput');
       document.getElementById('ref_by').innerText = getText('refby');
       renderItems();
@@ -843,7 +1087,9 @@
         localStorage.setItem('lastInvoiceNo', current);
         document.getElementById('invoiceNoInput').value = current + 1;
         document.getElementById('patientNameInput').value = '';
-        document.getElementById('ageGenderInput').value = '';
+        document.getElementById('patientMobileInput').value = '';
+        document.getElementById('patientAgeInput').value = '';
+        document.getElementById('patientGenderInput').value = 'Male';
         document.getElementById('itemName').value = '';
         document.getElementById('itemPrice').value = '';
         document.getElementById('itemQty').value = 1;
@@ -855,12 +1101,14 @@
     function printInvoice() {
       renderInvoice();
       commitInvoiceNumber();
+      saveBillToHistory();
       window.print();
     }
 
     function exportPDF() {
       renderInvoice();
       commitInvoiceNumber();
+      saveBillToHistory();
       const element = document.getElementById('invoice');
 
       // Config for PDF
